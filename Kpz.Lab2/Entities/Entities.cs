@@ -52,6 +52,7 @@ public sealed class User
     public required string ExternalAuthId { get; set; }
     public required string UserEmail { get; set; }
     public required string UserName { get; set; }
+    public string? UserPhoneNumber { get; set; }
     public DateOnly? UserBirthDate { get; set; }
     public required string UserRole { get; set; }
     public DateTime UserCreatedAt { get; set; }

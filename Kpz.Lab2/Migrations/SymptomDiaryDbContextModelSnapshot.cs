@@ -128,6 +128,9 @@ namespace Kpz.Lab2.Migrations
                     b.HasIndex("UserId", "EntryDate")
                         .IsUnique();
 
+                    b.HasIndex("UserId", "EntryUpdatedAt")
+                        .HasDatabaseName("IX_DiaryEntries_UserId_EntryUpdatedAt");
+
                     b.ToTable("DiaryEntries", (string)null);
                 });
 
@@ -510,6 +513,10 @@ namespace Kpz.Lab2.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserPhoneNumber")
+                        .HasMaxLength(25)
+                        .HasColumnType("nvarchar(25)");
 
                     b.Property<string>("UserRole")
                         .IsRequired()

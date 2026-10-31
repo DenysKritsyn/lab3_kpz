@@ -34,6 +34,7 @@ public static class SeedData
             ExternalAuthId = "google-oauth2|100001",
             UserEmail = "denys.patient@example.com",
             UserName = "Denys Kovalenko",
+            UserPhoneNumber = "+380671112233",
             UserBirthDate = new DateOnly(2005, 4, 15),
             UserRole = "User",
             UserCreatedAt = baseTime,

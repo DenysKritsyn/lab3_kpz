@@ -165,6 +165,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(100)
             .IsRequired();
 
+        entity.Property(x => x.UserPhoneNumber)
+            .HasMaxLength(25);
+
         entity.Property(x => x.UserRole)
             .HasMaxLength(20)
             .IsRequired();
@@ -204,6 +207,10 @@ public sealed class DiaryEntryConfiguration : IEntityTypeConfiguration<DiaryEntr
             .IsUnique();
 
         entity.HasIndex(x => x.EntryDate);
+
+        // Composite index for fast lookup of user entries modified after report generation
+        entity.HasIndex(x => new { x.UserId, x.EntryUpdatedAt })
+            .HasDatabaseName("IX_DiaryEntries_UserId_EntryUpdatedAt");
 
         entity.HasOne(x => x.User)
             .WithMany(u => u.DiaryEntries)

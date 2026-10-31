@@ -67,6 +67,9 @@ await taskManager.RunLinqQueriesAndSqlDiagnosticsDemoAsync(ct);
 Console.WriteLine("[Task 10] Running Optimistic Concurrency demonstration (RowVersion with 2 DbContexts)...");
 await taskManager.RunOptimisticConcurrencyDemoAsync(ct);
 
+Console.WriteLine("[Task 11 & 12] Verifying second migration (UserPhoneNumber & Index) and Reverse Engineering (Scaffolded DbContext)...");
+await taskManager.RunSecondMigrationAndScaffoldVerificationDemoAsync(ct);
+
 Console.WriteLine("================================================================================");
 Console.WriteLine("  All demonstration tasks completed successfully.");
 Console.WriteLine("================================================================================");

@@ -379,6 +379,41 @@ public sealed class TaskManager(IServiceProvider serviceProvider, string connect
         }
     }
 
+    public async Task RunSecondMigrationAndScaffoldVerificationDemoAsync(CancellationToken ct)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SymptomDiaryDbContext>();
+
+        var appliedMigrations = (await db.Database.GetAppliedMigrationsAsync(ct)).ToList();
+        Console.WriteLine($"  Applied migrations in DB ({appliedMigrations.Count}):");
+        foreach (var m in appliedMigrations)
+        {
+            Console.WriteLine($"    - {m}");
+        }
+
+        // Verify the newly added UserPhoneNumber property from Migration 2
+        int demoUserId = await GetDefaultUserIdAsync(ct);
+        await db.Users
+            .Where(u => u.UserId == demoUserId)
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.UserPhoneNumber, "+380671112233"), ct);
+
+        var userWithPhone = await db.Users
+            .AsNoTracking()
+            .FirstAsync(u => u.UserId == demoUserId, ct);
+
+        Console.WriteLine($"  Verified new column UserPhoneNumber on '{userWithPhone.UserName}': {userWithPhone.UserPhoneNumber}");
+
+        // Verify Reverse Engineering (Scaffolded DbContext) against the live database
+        var scaffoldOptions = new DbContextOptionsBuilder<Kpz.Lab2.Data.Scaffolded.ScaffoldedSymptomDiaryDbContext>()
+            .UseSqlServer(connectionString)
+            .Options;
+
+        await using var scaffoldDb = new Kpz.Lab2.Data.Scaffolded.ScaffoldedSymptomDiaryDbContext(scaffoldOptions);
+        int scaffoldedUsersCount = await scaffoldDb.Users.CountAsync(ct);
+        int scaffoldedEntriesCount = await scaffoldDb.DiaryEntries.CountAsync(ct);
+        Console.WriteLine($"  Verified ScaffoldedSymptomDiaryDbContext (Reverse Engineering): Users={scaffoldedUsersCount}, DiaryEntries={scaffoldedEntriesCount}\n");
+    }
+
     private async Task<int> GetDefaultUserIdAsync(CancellationToken ct)
     {
         using var scope = serviceProvider.CreateScope();

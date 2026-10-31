@@ -127,7 +127,7 @@ public sealed class AdoNetDiaryService(string connectionString)
         return affected > 0;
     }
 
-    // --- CRUD for the second related entity: Measurements ---
+    // CRUD for the second related entity: Measurements
 
     public async Task<int> CreateMeasurementAsync(
         int diaryEntryId,
@@ -407,7 +407,7 @@ public sealed class AdoNetDiaryService(string connectionString)
         {
             var now = DateTime.UtcNow;
 
-            // 1. Insert day entry (Table 1: DiaryEntries)
+            // Insert day entry (Table 1: DiaryEntries)
             const string insertEntrySql = """
                 INSERT INTO DiaryEntries (UserId, EntryDate, EntryNote, EntryCreatedAt, EntryUpdatedAt)
                 OUTPUT INSERTED.DiaryEntryId
@@ -441,7 +441,7 @@ public sealed class AdoNetDiaryService(string connectionString)
                 }
             }
 
-            // 2. Insert intervals (Table 2: DayIntervals) and symptoms (Table 3: IntervalSymptoms)
+            // Insert intervals (Table 2: DayIntervals) and symptoms (Table 3: IntervalSymptoms)
             const string insertIntervalSql = """
                 INSERT INTO DayIntervals (DiaryEntryId, IntervalStartHour, IntervalEndHour, WellbeingLevelId, IntervalNote)
                 OUTPUT INSERTED.DayIntervalId
@@ -481,7 +481,7 @@ public sealed class AdoNetDiaryService(string connectionString)
                 }
             }
 
-            // 3. Validate physiological bounds and insert measurements (Table 4: Measurements)
+            // Validate physiological bounds and insert measurements (Table 4: Measurements)
             const string checkMetricSql = """
                 SELECT MetricName, MetricMinValue, MetricMaxValue
                 FROM MetricTypes
