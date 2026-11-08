@@ -7,15 +7,15 @@
     "realm": [
       {
         "name": "patient",
-        "description": "Patient (write his diary)"
+        "description": "Пацієнт (ведення власного щоденника симптомів)"
       },
       {
         "name": "doctor",
-        "description": "Doctor (review reports)"
+        "description": "Лікар (перегляд записів/звітів пацієнтів та ведення довідника симптомів)"
       },
       {
         "name": "admin",
-        "description": "Administrator (full access)"
+        "description": "Адміністратор системи (повний доступ)"
       }
     ]
   },
@@ -77,6 +77,20 @@
             "introspection.token.claim": "true",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "email-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "email",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "email",
+            "jsonType.label": "String"
+          }
         }
       ]
     }
@@ -86,9 +100,27 @@
       "username": "patient1",
       "enabled": true,
       "emailVerified": true,
-      "email": "patient1@example.com",
-      "firstName": "Олена",
-      "lastName": "Коваленко",
+      "email": "alex.smith@example.com",
+      "firstName": "Alex",
+      "lastName": "Smith",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "patient123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "patient"
+      ]
+    },
+    {
+      "username": "patient2",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "olena.koval@example.com",
+      "firstName": "Olena",
+      "lastName": "Koval",
       "credentials": [
         {
           "type": "password",
@@ -104,9 +136,9 @@
       "username": "doctor1",
       "enabled": true,
       "emailVerified": true,
-      "email": "doctor1@example.com",
-      "firstName": "Ігор",
-      "lastName": "Мельник",
+      "email": "dmytro.shevchenko@example.com",
+      "firstName": "Dmytro",
+      "lastName": "Shevchenko",
       "credentials": [
         {
           "type": "password",
@@ -122,9 +154,9 @@
       "username": "admin1",
       "enabled": true,
       "emailVerified": true,
-      "email": "admin1@example.com",
-      "firstName": "Денис",
-      "lastName": "Адмін",
+      "email": "admin@example.com",
+      "firstName": "Denys",
+      "lastName": "Admin",
       "credentials": [
         {
           "type": "password",
@@ -138,4 +170,3 @@
     }
   ]
 }
-

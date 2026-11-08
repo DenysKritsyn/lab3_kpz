@@ -1,6 +1,14 @@
 using System.Security.Claims;
+using FluentValidation;
+using lab3_kpz.Core.WebApi.Authorization;
+using lab3_kpz.Core.WebApi.Exceptions;
+using lab3_kpz.Core.WebApi.Mappings;
+using lab3_kpz.Core.WebApi.Services;
+using lab3_kpz.Core.WebApi.Services.Interfaces;
+using lab3_kpz.Core.WebApi.Validators;
 using lab3_kpz.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -17,7 +25,17 @@ builder.Services.AddDbContext<SymptomDiaryDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
+builder.Services.AddSingleton<SymptomDiaryMapper>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateSymptomDtoValidator>();
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISymptomService, SymptomService>();
+builder.Services.AddScoped<IDiaryEntryService, DiaryEntryService>();
+builder.Services.AddScoped<IDayEventService, DayEventService>();
+builder.Services.AddScoped<IMeasurementService, MeasurementService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -37,9 +55,28 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorizationBuilder();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AppPolicies.RequireAdminOnly, policy => policy
+        .RequireAuthenticatedUser()
+        .RequireRole(AppRoles.Admin))
+    .AddPolicy(AppPolicies.RequireDoctorOrAdmin, policy => policy
+        .RequireAuthenticatedUser()
+        .RequireRole(AppRoles.Doctor, AppRoles.Admin))
+    .AddPolicy(AppPolicies.OwnerOrAdmin, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new OwnerOrAdminRequirement(allowDoctor: false)))
+    .AddPolicy(AppPolicies.OwnerDoctorOrAdmin, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new OwnerOrAdminRequirement(allowDoctor: true)));
+
+
+
+
+builder.Services.AddSingleton<IAuthorizationHandler, OwnerOrAdminHandler>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (!Environment.GetCommandLineArgs().Any(a => a.Contains("ef.dll") || a.Contains("dotnet-ef")))
 {
