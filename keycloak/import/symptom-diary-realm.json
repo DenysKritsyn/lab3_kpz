@@ -1,0 +1,141 @@
+{
+  "realm": "symptom-diary",
+  "enabled": true,
+  "displayName": "Symptom Diary Realm",
+  "accessTokenLifespan": 3600,
+  "roles": {
+    "realm": [
+      {
+        "name": "patient",
+        "description": "Patient (write his diary)"
+      },
+      {
+        "name": "doctor",
+        "description": "Doctor (review reports)"
+      },
+      {
+        "name": "admin",
+        "description": "Administrator (full access)"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "symptom-diary-client",
+      "name": "Symptom Diary OIDC Client (PKCE)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://oauth.pstmn.io/v1/callback",
+        "https://oauth.pstmn.io/v1/browser-callback",
+        "http://localhost:*",
+        "https://localhost:*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "symptom-diary-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm-roles-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "subject-sub-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-sub-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "patient1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "patient1@example.com",
+      "firstName": "Олена",
+      "lastName": "Коваленко",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "patient123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "patient"
+      ]
+    },
+    {
+      "username": "doctor1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "doctor1@example.com",
+      "firstName": "Ігор",
+      "lastName": "Мельник",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "doctor123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "doctor"
+      ]
+    },
+    {
+      "username": "admin1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin1@example.com",
+      "firstName": "Денис",
+      "lastName": "Адмін",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ]
+    }
+  ]
+}
+
