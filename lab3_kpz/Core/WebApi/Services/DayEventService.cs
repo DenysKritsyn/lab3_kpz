@@ -23,8 +23,6 @@ public sealed class DayEventService(
 
         var dbQuery = db.DayEvents
             .AsNoTracking()
-            .Include(e => e.EventType)
-            .Include(e => e.DiaryEntry)
             .AsQueryable();
 
         if (!isAdminOrDoctor)
@@ -54,10 +52,19 @@ public sealed class DayEventService(
         var events = await dbQuery
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
+            .Select(e => new DayEventResponseDto(
+                e.DayEventId,
+                e.DiaryEntryId,
+                e.EventTypeId,
+                e.EventType.EventTypeName,
+                e.EventStartTime,
+                e.EventEndTime,
+                e.IsPreciseTime,
+                e.EventNote))
             .ToListAsync(ct);
 
         return PagedResultDto<DayEventResponseDto>.Create(
-            mapper.ToDto(events),
+            events,
             totalCount,
             query.Page,
             query.PageSize);

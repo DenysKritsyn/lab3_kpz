@@ -23,9 +23,6 @@ public sealed class DiaryEntryService(
 
         var dbQuery = db.DiaryEntries
             .AsNoTracking()
-            .Include(d => d.DayIntervals)
-            .Include(d => d.DayEvents)
-            .Include(d => d.Measurements)
             .AsQueryable();
 
         // Patients can only see their own diary entries
@@ -67,13 +64,23 @@ public sealed class DiaryEntryService(
 
         var totalCount = await dbQuery.CountAsync(ct);
 
-        var entries = await dbQuery
+        var summaries = await dbQuery
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
+            .Select(d => new DiaryEntrySummaryDto(
+                d.DiaryEntryId,
+                d.UserId,
+                d.EntryDate,
+                d.EntryNote,
+                d.DayIntervals.Count,
+                d.DayEvents.Count,
+                d.Measurements.Count,
+                d.EntryCreatedAt,
+                d.EntryUpdatedAt))
             .ToListAsync(ct);
 
         return PagedResultDto<DiaryEntrySummaryDto>.Create(
-            mapper.ToSummaryDtoList(entries),
+            summaries,
             totalCount,
             query.Page,
             query.PageSize);

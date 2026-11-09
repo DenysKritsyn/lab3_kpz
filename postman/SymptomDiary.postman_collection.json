@@ -1,0 +1,994 @@
+{
+  "info": {
+    "_postman_id": "d8b29b45-4f88-4c19-9a67-81a9f70e5120",
+    "name": "Symptom Diary API (Lab 3 - Variant 15)",
+    "description": "Complete Postman collection for Symptom Diary Web API (.NET 10) with Keycloak OIDC (Authorization Code with PKCE), Policy-based & Resource-based authorization, pagination, validation, and all HTTP status codes (200, 201, 204, 400, 401, 403, 404, 409).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      { "key": "grant_type", "value": "authorization_code_with_pkce", "type": "string" },
+      { "key": "authUrl", "value": "{{keycloakUrl}}/realms/symptom-diary/protocol/openid-connect/auth", "type": "string" },
+      { "key": "accessTokenUrl", "value": "{{keycloakUrl}}/realms/symptom-diary/protocol/openid-connect/token", "type": "string" },
+      { "key": "clientId", "value": "symptom-diary-client", "type": "string" },
+      { "key": "code_challenge_method", "value": "S256", "type": "string" },
+      { "key": "scope", "value": "openid profile email", "type": "string" },
+      { "key": "redirect_uri", "value": "https://oauth.pstmn.io/v1/callback", "type": "string" },
+      { "key": "addTokenTo", "value": "header", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5120", "type": "string" },
+    { "key": "keycloakUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "patient1Token", "value": "", "type": "string" },
+    { "key": "patient2Token", "value": "", "type": "string" },
+    { "key": "doctorToken", "value": "", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "createdSymptomId", "value": "1", "type": "string" },
+    { "key": "createdDiaryEntryId", "value": "1", "type": "string" },
+    { "key": "createdDayEventId", "value": "1", "type": "string" },
+    { "key": "createdMeasurementId", "value": "1", "type": "string" },
+    { "key": "createdReportId", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. Auth (Keycloak Token Helpers)",
+      "item": [
+        {
+          "name": "Get Token - Patient 1 (alex.smith@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('patient1Token', json.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "client_id", "value": "symptom-diary-client", "type": "text" },
+                { "key": "grant_type", "value": "password", "type": "text" },
+                { "key": "username", "value": "patient1", "type": "text" },
+                { "key": "password", "value": "patient123", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/symptom-diary/protocol/openid-connect/token",
+              "host": ["{{keycloakUrl}}"],
+              "path": ["realms", "symptom-diary", "protocol", "openid-connect", "token"]
+            }
+          }
+        },
+        {
+          "name": "Get Token - Patient 2 (olena.koval@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('patient2Token', json.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "client_id", "value": "symptom-diary-client", "type": "text" },
+                { "key": "grant_type", "value": "password", "type": "text" },
+                { "key": "username", "value": "patient2", "type": "text" },
+                { "key": "password", "value": "patient123", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/symptom-diary/protocol/openid-connect/token",
+              "host": ["{{keycloakUrl}}"],
+              "path": ["realms", "symptom-diary", "protocol", "openid-connect", "token"]
+            }
+          }
+        },
+        {
+          "name": "Get Token - Doctor 1 (dmytro.shevchenko@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('doctorToken', json.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "client_id", "value": "symptom-diary-client", "type": "text" },
+                { "key": "grant_type", "value": "password", "type": "text" },
+                { "key": "username", "value": "doctor1", "type": "text" },
+                { "key": "password", "value": "doctor123", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/symptom-diary/protocol/openid-connect/token",
+              "host": ["{{keycloakUrl}}"],
+              "path": ["realms", "symptom-diary", "protocol", "openid-connect", "token"]
+            }
+          }
+        },
+        {
+          "name": "Get Token - Admin 1 (admin@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', json.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "client_id", "value": "symptom-diary-client", "type": "text" },
+                { "key": "grant_type", "value": "password", "type": "text" },
+                { "key": "username", "value": "admin1", "type": "text" },
+                { "key": "password", "value": "admin123", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/symptom-diary/protocol/openid-connect/token",
+              "host": ["{{keycloakUrl}}"],
+              "path": ["realms", "symptom-diary", "protocol", "openid-connect", "token"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Symptoms (/api/v1/symptoms)",
+      "item": [
+        {
+          "name": "GET All Symptoms (Paginated, Filtered, Sorted) [200 OK]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Contains pagination metadata', () => {",
+                  "    pm.expect(body).to.have.property('items');",
+                  "    pm.expect(body).to.have.property('totalCount');",
+                  "    pm.expect(body).to.have.property('totalPages');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms?page=1&pageSize=5&sortBy=name&sortDirection=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "5" },
+                { "key": "sortBy", "value": "name" },
+                { "key": "sortDirection", "value": "asc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Symptom Without Token [401 Unauthorized]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Symptom as Patient [403 Forbidden]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptomName\": \"Unauthorized Symptom\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Symptom Invalid Model [400 Bad Request]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Returns ValidationProblemDetails', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('errors');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{doctorToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptomName\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Symptom as Doctor [201 Created]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Has Location header', () => pm.response.to.have.header('Location'));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('createdSymptomId', body.symptomId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{doctorToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptomName\": \"Tinnitus\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Duplicate Symptom [409 Conflict]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{doctorToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptomName\": \"Tinnitus\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms"]
+            }
+          }
+        },
+        {
+          "name": "GET Symptom By Id [200 OK]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms/{{createdSymptomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms", "{{createdSymptomId}}"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Symptom as Doctor [204 No Content]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{doctorToken}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptomName\": \"Chronic Tinnitus\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms/{{createdSymptomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms", "{{createdSymptomId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Symptom as Doctor [403 Forbidden - Admin Only]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{doctorToken}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms/{{createdSymptomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms", "{{createdSymptomId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Symptom as Admin [204 No Content]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms/{{createdSymptomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms", "{{createdSymptomId}}"]
+            }
+          }
+        },
+        {
+          "name": "GET Non-Existent Symptom [404 Not Found]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symptoms/{{createdSymptomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symptoms", "{{createdSymptomId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Diary Entries (/api/v1/diary-entries)",
+      "item": [
+        {
+          "name": "GET All Diary Entries (Paginated & Filtered) [200 OK]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/diary-entries?page=1&pageSize=10&sortBy=date&sortDirection=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "diary-entries"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "sortBy", "value": "date" },
+                { "key": "sortDirection", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Create Diary Entry with Nested Graph [201 Created]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('createdDiaryEntryId', body.diaryEntryId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryDate\": \"2025-12-15\",\n  \"entryNote\": \"Mild headache in the morning, felt better after rest.\",\n  \"dayIntervals\": [\n    {\n      \"intervalStartTime\": \"08:00:00\",\n      \"intervalEndTime\": \"12:00:00\",\n      \"conditionStateId\": 2,\n      \"intervalNote\": \"Morning interval\",\n      \"symptoms\": [\n        {\n          \"symptomId\": 1,\n          \"severityLevelId\": 2,\n          \"symptomNote\": \"Frontal headache\"\n        }\n      ]\n    }\n  ],\n  \"dayEvents\": [],\n  \"measurements\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/diary-entries",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "diary-entries"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Diary Entry Duplicate Date [409 Conflict]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryDate\": \"2025-12-15\",\n  \"entryNote\": \"Duplicate date entry attempt\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/diary-entries",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "diary-entries"]
+            }
+          }
+        },
+        {
+          "name": "GET Diary Entry By Id as Owner [200 OK]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/diary-entries/{{createdDiaryEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "diary-entries", "{{createdDiaryEntryId}}"]
+            }
+          }
+        },
+        {
+          "name": "GET Diary Entry By Id as Another Patient [403 Forbidden]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden (Resource-based Auth)', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient2Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/diary-entries/{{createdDiaryEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "diary-entries", "{{createdDiaryEntryId}}"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Diary Entry as Owner [204 No Content]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entryNote\": \"Updated diary note after evening check.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/diary-entries/{{createdDiaryEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "diary-entries", "{{createdDiaryEntryId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Day Events (/api/v1/day-events)",
+      "item": [
+        {
+          "name": "POST Create Day Event [201 Created]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('createdDayEventId', body.dayEventId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diaryEntryId\": {{createdDiaryEntryId}},\n  \"eventTypeId\": 1,\n  \"eventStartTime\": \"09:00:00\",\n  \"eventEndTime\": \"09:15:00\",\n  \"isPreciseTime\": true,\n  \"eventNote\": \"Took Ibuprofen 200mg after breakfast\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/day-events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "day-events"]
+            }
+          }
+        },
+        {
+          "name": "GET All Day Events [200 OK]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/day-events?diaryEntryId={{createdDiaryEntryId}}&page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "day-events"],
+              "query": [
+                { "key": "diaryEntryId", "value": "{{createdDiaryEntryId}}" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Day Event By Id [200 OK]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/day-events/{{createdDayEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "day-events", "{{createdDayEventId}}"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Day Event [204 No Content]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventTypeId\": 1,\n  \"eventStartTime\": \"09:00:00\",\n  \"eventEndTime\": \"09:20:00\",\n  \"isPreciseTime\": true,\n  \"eventNote\": \"Took Ibuprofen 400mg with water\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/day-events/{{createdDayEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "day-events", "{{createdDayEventId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Day Event [204 No Content]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/day-events/{{createdDayEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "day-events", "{{createdDayEventId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Measurements (/api/v1/measurements)",
+      "item": [
+        {
+          "name": "POST Create Measurement with Metrics [201 Created]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('createdMeasurementId', body.measurementId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diaryEntryId\": {{createdDiaryEntryId}},\n  \"measuringTime\": \"10:30:00\",\n  \"metrics\": [\n    {\n      \"metricUnitId\": 1,\n      \"metricName\": \"Body Temperature\",\n      \"metricValue\": 37.2\n    },\n    {\n      \"metricUnitId\": 3,\n      \"metricName\": \"Heart Rate\",\n      \"metricValue\": 78\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "measurements"]
+            }
+          }
+        },
+        {
+          "name": "GET All Measurements [200 OK]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurements?diaryEntryId={{createdDiaryEntryId}}&page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "measurements"],
+              "query": [
+                { "key": "diaryEntryId", "value": "{{createdDiaryEntryId}}" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Measurement By Id [200 OK]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurements/{{createdMeasurementId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "measurements", "{{createdMeasurementId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Measurement [204 No Content]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurements/{{createdMeasurementId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "measurements", "{{createdMeasurementId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Reports (/api/v1/reports)",
+      "item": [
+        {
+          "name": "POST Generate Medical Report [201 Created]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('createdReportId', body.reportId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportPeriodFrom\": \"2025-01-01\",\n  \"reportPeriodTo\": \"2025-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports"]
+            }
+          }
+        },
+        {
+          "name": "GET All Reports [200 OK]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Report By Id [200 OK]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/{{createdReportId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports", "{{createdReportId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Report [204 No Content]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/{{createdReportId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reports", "{{createdReportId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Diary Entry Cleanup [204 No Content]",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{patient1Token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/diary-entries/{{createdDiaryEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "diary-entries", "{{createdDiaryEntryId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
